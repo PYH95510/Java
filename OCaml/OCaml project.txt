@@ -1,0 +1,109 @@
+let rec pow x n =
+  if n == 0
+    then 1
+  else if n < 0
+    then 1/(pow x (-n))
+  else
+    x * (pow x (n-1));;
+
+let rec float_pow x n =
+  if n == 0
+    then 1.0
+  else if n < 0
+    then 1.0/.(float_pow x (-n))
+  else 
+    x *. (float_pow x (n-1));;
+
+let reverse list = 
+  let rec reverse_helper l : 'a list -> 'a list = function
+    | [] -> l
+    | h::t -> reverse_helper (h::l) t in reverse_helper [] list;;
+
+let rec compress list = match list with 
+  | [] -> []
+  | [a] -> [a]
+  | h::t -> if h = (List.hd t) 
+             then compress t
+             else h :: compress t;;
+
+let cluster list = 
+  let rec cluster_helper outer inner : 'a list -> 'a list list = function
+      | [] -> []
+      | [a] -> [a]::outer
+      | h::t -> if h = (List.hd t) 
+                then cluster_helper outer (h::inner) t
+                else cluster_helper ((h::inner)::outer) [] t
+                in reverse (cluster_helper [] [] list);;
+
+let rec slice list (i : int) (j : int) = 
+  let rec slice_helper index = function
+     | [] -> []
+     | h::t -> if ((j <= i) || (i < 0) || (j < 0))
+               then []
+               else if (j > List.length list)
+               then slice list i (List.length list)
+               else if (i > index)
+               then slice_helper (index + 1) t
+               else if (index >= j)
+               then slice_helper (index + 1) t
+               else h::slice_helper (index + 1) t
+               in slice_helper 0 list;;
+
+let composition f g = fun x -> f (g x);;
+
+let equiv_on f g lst = List.map f lst = List.map g lst;;
+
+let rec pairwisefilter cmp lst = match lst with 
+  | [] -> []
+  | [a] -> [a]
+  | h1::(h2::t) -> if h1 = (cmp h1 h2)
+                   then h1::(pairwisefilter cmp t)
+                   else if (h2 = (cmp h1 h2))
+                   then h2::(pairwisefilter cmp t)
+                   else pairwisefilter cmp t;;
+
+let rec polynomial tuples = fun x -> match tuples with
+  | [] -> 0
+  | (a, b)::t -> a * (pow x b) + polynomial t x;;
+
+type bool_expr =
+  | Lit of string
+  | Not of bool_expr
+  | And of bool_expr * bool_expr
+  | Or of bool_expr * bool_expr;;
+
+let third (a, b, c) = c;;
+
+let rec truth_table a b exp = match exp with
+  | Lit(s) -> if s = a 
+              then [(true, true, true); (true, false, true); (false, true, false); (false, false, false)]
+              else if s = b
+              then [(true, true, true); (true, false, false); (false, true, true); (false, false, false)]
+              else []
+  | Not(x) -> [(true, true, not (third (List.hd (truth_table a b x)))); 
+               (true, false, not (third ((List.nth (truth_table a b x) 1))));
+               (false, true, not (third ((List.nth (truth_table a b x) 2))));
+               (false, false, not (third ((List.nth (truth_table a b x) 3))))]
+  | And(x, y) -> [(true, true, (third (List.hd (truth_table a b x))) && (third (List.hd (truth_table a b y))));
+                  (true, false, (third ((List.nth (truth_table a b x) 1))) && (third ((List.nth (truth_table a b y) 1))));
+                  (false, true, (third ((List.nth (truth_table a b x) 2))) && (third ((List.nth (truth_table a b y) 2))));
+                  (false, false, (third ((List.nth (truth_table a b x) 3))) && (third ((List.nth (truth_table a b y) 3))))]
+  | Or(x, y) -> [(true, true, (third (List.hd (truth_table a b x))) || (third (List.hd (truth_table a b y))));
+                 (true, false, (third ((List.nth (truth_table a b x) 1))) || (third ((List.nth (truth_table a b y) 1))));
+                 (false, true, (third ((List.nth (truth_table a b x) 2))) || (third ((List.nth (truth_table a b y) 2))));
+                 (false, false, (third ((List.nth (truth_table a b x) 3))) || (third ((List.nth (truth_table a b y) 3))))];;
+
+
+type 'a binary_tree =
+  | Node of 'a * 'a binary_tree * 'a binary_tree
+  | Empty;;
+
+let rec tree2str tree  = match tree with 
+  | Node(a, b, c) -> if b = Empty && c = Empty
+                     then (string_of_int a)
+                     else if b = Empty 
+                     then (string_of_int a) ^ "(" ^ "," ^ (tree2str c) ^ ")"
+                     else if c = Empty
+                     then (string_of_int a) ^ "(" ^ (tree2str b) ^ "," ^ ")"
+                     else (string_of_int a) ^ "(" ^ (tree2str b) ^ "," ^ (tree2str c) ^ ")"
+  | Empty -> "";;
